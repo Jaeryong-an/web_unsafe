@@ -18,7 +18,7 @@ import json
 
 
 # Google認証とAPIキー
-SERVICE_ACCOUNT_FILE = os.getenv("SERVICE_ACCOUNT_FILE")
+SERVICE_ACCOUNT_JSON = os.getenv("SERVICE_ACCOUNT_JSON")
 SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
 SHEET_NAME = os.getenv("SHEET_NAME")
 DRIVE_FOLDER_ID = os.getenv("DRIVE_FOLDER_ID")
@@ -26,19 +26,19 @@ GPT_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # ✅ 필수 환경변수 체크
 missing_vars = []
-for var_name in ["SERVICE_ACCOUNT_FILE", "SPREADSHEET_ID", "SHEET_NAME", "DRIVE_FOLDER_ID", "OPENAI_API_KEY"]:
+for var_name in ["SERVICE_ACCOUNT_JSON", "SPREADSHEET_ID", "SHEET_NAME", "DRIVE_FOLDER_ID", "OPENAI_API_KEY"]:
     if not os.getenv(var_name):
         missing_vars.append(var_name)
 if missing_vars:
-    st.error(f"❌ 다음 환경변수가 설정되지 않았습니다: {', '.join(missing_vars)}")
+    st.error(f"❌ 次の変数が設定されてません。: {', '.join(missing_vars)}")
     st.stop()
 
 # ✅ 인증 처리
-if not os.path.exists(SERVICE_ACCOUNT_FILE):
-    st.error("❌ SERVICE_ACCOUNT_FILE 경로가 올바르지 않습니다.")
+if not os.path.exists(SERVICE_ACCOUNT_JSON):
+    st.error("❌ SERVICE_ACCOUNT_JSON パスが正しくありません。")
     st.stop()
 
-creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=[
+creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_JSON, scopes=[
     'https://www.googleapis.com/auth/drive',
     'https://www.googleapis.com/auth/spreadsheets'
 ])
