@@ -1,2 +1,2 @@
-web_unsafe_list.py
 *.json
+.DS_Store
