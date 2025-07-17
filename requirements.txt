@@ -1,8 +1,28 @@
+# 기본 앱 구성
 streamlit
-pandas
 openai
 requests
+beautifulsoup4
+pillow
+python-dotenv
+
+# Selenium + 드라이버 자동 설치
+selenium
+webdriver-manager
+
+# OCR 관련
+pytesseract
+
+# Google API 관련
+gspread
 google-api-python-client
 google-auth
 google-auth-oauthlib
-beautifulsoup4
+google-auth-httplib2
+oauth2client  # 일부 구글 드라이브 레거시 대응용
+
+# 자연어 처리
+fugashi  # 일본어 형태소 분석기
+
+# 기타
+urllib3
