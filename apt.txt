@@ -1,0 +1,7 @@
+tesseract-ocr
+fonts-noto-cjk
+chromium-browser
+chromium-chromedriver
+mecab
+libmecab-dev
+mecab-ipadic-utf8
