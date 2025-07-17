@@ -148,13 +148,20 @@ def extract_image_ocr_text(img_path: str) -> str:
 
 # スクショ
 def take_fullpage_screenshot(driver, save_path):
-    time.sleep(5) 
-    total_height = driver.execute_script("return document.body.scrollHeight || document.documentElement.scrollHeight")
-    total_width = driver.execute_script("return document.body.scrollWidth || document.documentElement.scrollWidth")
-    driver.set_window_size(total_width, total_height)
-    time.sleep(2)
-    driver.save_screenshot(save_path)
-    return save_path
+    try:
+        time.sleep(2)
+        total_height = driver.execute_script("return document.body.scrollHeight || document.documentElement.scrollHeight")
+        total_width = driver.execute_script("return document.body.scrollWidth || document.documentElement.scrollWidth")
+        driver.set_window_size(total_width, total_height)
+        time.sleep(2)
+        driver.save_screenshot(save_path)
+        if os.path.exists(save_path):
+            return save_path
+        else:
+            raise FileNotFoundError("スクリーンショット保存に失敗しました")
+    except Exception as e:
+        st.warning(f"📸 スクリーンショットエラー: {e}")
+        return ""
 
 def crawl_with_ocr(url: str, idx: int) -> tuple[str, str, str, str, str]:
     try:
@@ -169,9 +176,10 @@ def crawl_with_ocr(url: str, idx: int) -> tuple[str, str, str, str, str]:
         driver = None
         try:
             options = Options()
-            options.add_argument('--headless')  
+            options.add_argument('--headless=new') 
             options.add_argument('--disable-gpu')
             options.add_argument('--no-sandbox')
+            options.add_argument('--disable-dev-shm-usage')
             options.add_argument('--window-size=1280,1500') 
             service = Service(ChromeDriverManager().install())
             driver = webdriver.Chrome(service=service, options=options)
@@ -390,12 +398,6 @@ def is_japanese_site_by_html_or_ocr(url: str, html: str, ocr_text: str, threshol
     domain = extract_domain(url)
     if any(domain.endswith(jd) for jd in JAPANESE_DOMAINS):
         return True
-
-    # ドメインホワイトリスト（日本サイト強制判定）
-    domain = extract_domain(url)
-    if any(domain.endswith(jd) for jd in JAPANESE_DOMAINS):
-        return True
-
 
     # HTML Body抽出
     text = extract_body_text(html)
