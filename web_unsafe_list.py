@@ -38,10 +38,14 @@ if not os.path.exists(SERVICE_ACCOUNT_JSON):
     st.error("❌ SERVICE_ACCOUNT_JSON パスが正しくありません。")
     st.stop()
 
-creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_JSON, scopes=[
-    'https://www.googleapis.com/auth/drive',
-    'https://www.googleapis.com/auth/spreadsheets'
-])
+creds = Credentials.from_service_account_info(
+    json.loads(SERVICE_ACCOUNT_JSON),
+    scopes=[
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/spreadsheets"
+    ]
+)
+
 gc = gspread.authorize(creds)
 drive_service = build('drive', 'v3', credentials=creds)
 worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
