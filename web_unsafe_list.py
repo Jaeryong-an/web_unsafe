@@ -1,4 +1,3 @@
-# 6月12日 シートでキーワード管理
 import os, re, time, datetime, requests, base64, io
 import streamlit as st
 from bs4 import BeautifulSoup
@@ -15,43 +14,40 @@ import pytesseract
 import gspread
 import openai
 from fugashi import Tagger
-import requests
 import json
 
 
 # Google認証とAPIキー
-SERVICE_ACCOUNT_FILE = '/Users/jaeryong.an/Desktop/Project/Web Unsafe/web-unsafe-list-81dc0ca9e64d.json'
-SPREADSHEET_ID = '1yotfmcaYDqfP1eG5xkAWX0J3s6lebECY_TVP41jgMsI'
-SHEET_NAME = 'check'
-DRIVE_FOLDER_ID = '1z-fAzzc0G5kyd3ab1fYZdI92XBvSS_Cf'
-GPT_API_KEY = st.sidebar.text_input("OpenAI API Key", type="password")
+SERVICE_ACCOUNT_FILE = os.getenv("SERVICE_ACCOUNT_FILE")
+SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
+SHEET_NAME = os.getenv("SHEET_NAME")
+DRIVE_FOLDER_ID = os.getenv("DRIVE_FOLDER_ID")
+GPT_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# --- 🧾 Google 認証 JSON アップロード方法 ---
-uploaded_file = st.sidebar.file_uploader("📄 GoogleサービスアカウントJSONをアップロード", type=["json"])
-DEFAULT_SERVICE_ACCOUNT_PATH = SERVICE_ACCOUNT_FILE
-if uploaded_file:
-    SERVICE_ACCOUNT_FILE = "/tmp/temp_service_key.json"
-    with open(SERVICE_ACCOUNT_FILE, "wb") as f:
-        f.write(uploaded_file.read())
-    st.sidebar.success("✅ 認証ファイルをアップロードしました")
-elif os.path.exists(DEFAULT_SERVICE_ACCOUNT_PATH):
-    SERVICE_ACCOUNT_FILE = DEFAULT_SERVICE_ACCOUNT_PATH
-    st.sidebar.info("ℹ️ 既存の認証ファイルを使用しています")
-else:
-    SERVICE_ACCOUNT_FILE = ""
-    st.sidebar.error("❌ 認証ファイルが必要です")
-
-# --- ファイルが有効な場合のみ ---
-if SERVICE_ACCOUNT_FILE:
-    creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=[
-        'https://www.googleapis.com/auth/drive',
-        'https://www.googleapis.com/auth/spreadsheets'
-    ])
-    gc = gspread.authorize(creds)
-    drive_service = build('drive', 'v3', credentials=creds)
-    worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
-else:
+# ✅ 필수 환경변수 체크
+missing_vars = []
+for var_name in ["SERVICE_ACCOUNT_FILE", "SPREADSHEET_ID", "SHEET_NAME", "DRIVE_FOLDER_ID", "OPENAI_API_KEY"]:
+    if not os.getenv(var_name):
+        missing_vars.append(var_name)
+if missing_vars:
+    st.error(f"❌ 다음 환경변수가 설정되지 않았습니다: {', '.join(missing_vars)}")
     st.stop()
+
+# ✅ 인증 처리
+if not os.path.exists(SERVICE_ACCOUNT_FILE):
+    st.error("❌ SERVICE_ACCOUNT_FILE 경로가 올바르지 않습니다.")
+    st.stop()
+
+creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=[
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/spreadsheets'
+])
+gc = gspread.authorize(creds)
+drive_service = build('drive', 'v3', credentials=creds)
+worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
+
+# ✅ OpenAI 설정
+openai.api_key = GPT_API_KEY
 
 @st.cache_resource
 def validate_openai_key(api_key):
@@ -63,26 +59,6 @@ def validate_openai_key(api_key):
         return resp.status_code == 200
     except Exception:
         return False
-
-# API KEY 有効性確認
-if GPT_API_KEY:
-    if validate_openai_key(GPT_API_KEY):
-        openai.api_key = GPT_API_KEY
-        st.sidebar.success("✅ 有効なAPIキーです")
-    else:
-        openai.api_key = ""
-        st.sidebar.error("❌ 無効なAPIキーです")
-else:
-    openai.api_key = ""
-
-creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=[
-    'https://www.googleapis.com/auth/drive',
-    'https://www.googleapis.com/auth/spreadsheets'
-])
-gc = gspread.authorize(creds)
-worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
-drive_service = build('drive', 'v3', credentials=creds)
-tagger = Tagger()
 
 def load_rules_from_sheet(sheet_name: str):
     worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(sheet_name)
@@ -115,6 +91,8 @@ def load_rules_from_sheet(sheet_name: str):
     return genre_keywords, url_patterns, japanese_domains
 
 # OCR + クリーン本文抽出
+tagger = Tagger()
+
 def get_words(text):
     return [word.surface for word in tagger(text)] if text else []
 
@@ -403,6 +381,7 @@ def is_japanese_site_by_html(html: str, threshold: float = 0.4) -> bool:
 
 
 def is_japanese_site_by_html_or_ocr(html: str, ocr_text: str, threshold: float = 0.4) -> bool:
+    domain = extract_domain(url)
 
     # ドメインホワイトリスト（日本サイト強制判定）
     domain = extract_domain(url)
@@ -460,9 +439,6 @@ def upload_to_drive(file_path: str, file_name: str) -> str:
         return f"https://drive.google.com/uc?id={file_id}"
     except Exception as e:
         return ""
-    except:
-        return "画像GPTエラー"
-
 
 # Streamlit UI
 st.title("Web Unsafe 半定")
@@ -504,7 +480,8 @@ if st.button("判定実行"):
             cell = worksheet.find(url)
             row = cell.row
 
-            site_origin = "日本サイト" if is_japanese_site_by_html_or_ocr(html, ocr_text) else "海外サイト"
+            site_origin = "日本サイト" if is_japanese_site_by_html_or_ocr(url, html, ocr_text) else "海外サイト"
+
             score_explanation = (
                 f"{site_origin}\n"
                 f"キーワードスコア: {ocr_point}点\n"
