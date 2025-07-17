@@ -34,12 +34,14 @@ if missing_vars:
     st.stop()
 
 # ✅ 인증 처리
-if not os.path.exists(SERVICE_ACCOUNT_JSON):
-    st.error("❌ SERVICE_ACCOUNT_JSON パスが正しくありません。")
+try:
+    service_account_info = json.loads(SERVICE_ACCOUNT_JSON)
+except Exception:
+    st.error("❌ SERVICE_ACCOUNT_JSON が有効なJSONではありません。")
     st.stop()
 
 creds = Credentials.from_service_account_info(
-    json.loads(SERVICE_ACCOUNT_JSON),
+    service_account_info,
     scopes=[
         "https://www.googleapis.com/auth/drive",
         "https://www.googleapis.com/auth/spreadsheets"
@@ -384,8 +386,10 @@ def is_japanese_site_by_html(html: str, threshold: float = 0.4) -> bool:
     return (jp_chars / total_chars) >= threshold if total_chars > 0 else False
 
 
-def is_japanese_site_by_html_or_ocr(html: str, ocr_text: str, threshold: float = 0.4) -> bool:
+def is_japanese_site_by_html_or_ocr(url: str, html: str, ocr_text: str, threshold: float = 0.4) -> bool:
     domain = extract_domain(url)
+    if any(domain.endswith(jd) for jd in JAPANESE_DOMAINS):
+        return True
 
     # ドメインホワイトリスト（日本サイト強制判定）
     domain = extract_domain(url)
