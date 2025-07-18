@@ -483,8 +483,6 @@ def upload_to_drive(file_path: str, file_name: str) -> str:
     except Exception as e:
         st.error(f"❌ Drive アップ失敗: {e}")
         return ""
-st.write("📂 アップロード先:", DRIVE_FOLDER_ID)
-
 
 # Streamlit UI
 st.title("Web Unsafe 半定")
