@@ -44,4 +44,4 @@ COPY . .
 EXPOSE 7860
 
 # Run Streamlit
-CMD ["streamlit", "run", "main.py", "--server.port=7860", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "web_unsafe_list.py", "--server.port=7860", "--server.address=0.0.0.0"]
