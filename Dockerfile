@@ -43,6 +43,5 @@ COPY . .
 # Expose Streamlit port
 EXPOSE 7860
 
-# Run Streamlit
-CMD streamlit run main.py --server.port=$PORT --server.address=0.0.0.0
-
+# Run Streamlit using web_unsafe_list.py
+CMD sh -c "streamlit run web_unsafe_list.py --server.port=$PORT --server.address=0.0.0.0"
