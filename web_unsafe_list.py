@@ -16,7 +16,6 @@ import openai
 from fugashi import Tagger
 import json
 
-
 # Google認証とAPIキー
 SERVICE_ACCOUNT_JSON = os.getenv("SERVICE_ACCOUNT_JSON")
 SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
@@ -35,9 +34,10 @@ if missing_vars:
 
 # ✅ 인증 처리
 try:
-    service_account_info = json.loads(SERVICE_ACCOUNT_JSON)
-except Exception:
-    st.error("❌ SERVICE_ACCOUNT_JSON が有効なJSONではありません。")
+    with open("web-unsafe-list-81dc0ca9e64d.json", "r", encoding="utf-8") as f:
+        service_account_info = json.load(f)
+except Exception as e:
+    st.error(f"❌ credentials.json の読み込みに失敗しました: {e}")
     st.stop()
 
 creds = Credentials.from_service_account_info(
@@ -195,7 +195,7 @@ def crawl_with_ocr(url: str, idx: int) -> tuple[str, str, str, str, str]:
         driver = None
         try:
             options = Options()
-            options.add_argument('--headless=new') 
+            options.add_argument('--headless=chrome') 
             options.add_argument('--disable-gpu')
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-dev-shm-usage')
@@ -463,11 +463,20 @@ def upload_to_drive(file_path: str, file_name: str) -> str:
             'parents': [DRIVE_FOLDER_ID]
         }
         media = MediaFileUpload(file_path, resumable=True)
-        file = drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+
+        file = drive_service.files().create(
+            body=file_metadata,
+            media_body=media,
+            fields='id',
+            supportsAllDrives=True 
+        ).execute()
+
         file_id = file.get('id')
         return f"https://drive.google.com/uc?id={file_id}"
     except Exception as e:
+        st.error(f"❌ Drive アップ失敗: {e}")
         return ""
+
 
 # Streamlit UI
 st.title("Web Unsafe 半定")
