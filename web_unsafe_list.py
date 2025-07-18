@@ -34,10 +34,9 @@ if missing_vars:
 
 # ✅ 인증 처리
 try:
-    with open("web-unsafe-list-81dc0ca9e64d.json", "r", encoding="utf-8") as f:
-        service_account_info = json.load(f)
-except Exception as e:
-    st.error(f"❌ credentials.json の読み込みに失敗しました: {e}")
+    service_account_info = json.loads(SERVICE_ACCOUNT_JSON)
+except Exception:
+    st.error("❌ SERVICE_ACCOUNT_JSON が有効なJSONではありません。")
     st.stop()
 
 creds = Credentials.from_service_account_info(
