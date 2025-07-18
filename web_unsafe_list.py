@@ -149,11 +149,30 @@ def extract_image_ocr_text(img_path: str) -> str:
 # スクショ
 def take_fullpage_screenshot(driver, save_path):
     try:
-        time.sleep(2)
-        total_height = driver.execute_script("return document.body.scrollHeight || document.documentElement.scrollHeight")
-        total_width = driver.execute_script("return document.body.scrollWidth || document.documentElement.scrollWidth")
+        # JavaScriptの読み込み待ち（最大5秒）
+        for _ in range(5):
+            ready_state = driver.execute_script("return document.readyState")
+            if ready_state == "complete":
+                break
+            time.sleep(1)
+
+        # ページ全体のサイズ取得
+        total_height = driver.execute_script("return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)")
+        total_width = driver.execute_script("return Math.max(document.body.scrollWidth, document.documentElement.scrollWidth)")
+
         driver.set_window_size(total_width, total_height)
-        time.sleep(2)
+        time.sleep(2)  # ウィンドウリサイズ反映待ち
+
+        # スクロールしてからキャプチャすることで読み込みが安定
+        driver.execute_script("window.scrollTo(0, 0)")
+        time.sleep(0.5)
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight / 2)")
+        time.sleep(0.5)
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+        time.sleep(0.5)
+        driver.execute_script("window.scrollTo(0, 0)")
+        time.sleep(1.5)
+
         driver.save_screenshot(save_path)
         if os.path.exists(save_path):
             return save_path
