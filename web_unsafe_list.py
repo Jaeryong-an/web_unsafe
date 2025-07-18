@@ -467,14 +467,23 @@ def upload_to_drive(file_path: str, file_name: str) -> str:
             body=file_metadata,
             media_body=media,
             fields='id',
-            supportsAllDrives=True 
+            supportsAllDrives=True
         ).execute()
 
         file_id = file.get('id')
+
+        # ✅ 업로드한 파일을 anyone에 공개
+        drive_service.permissions().create(
+            fileId=file_id,
+            body={"role": "reader", "type": "anyone"},
+            supportsAllDrives=True
+        ).execute()
+
         return f"https://drive.google.com/uc?id={file_id}"
     except Exception as e:
         st.error(f"❌ Drive アップ失敗: {e}")
         return ""
+st.write("📂 アップロード先:", DRIVE_FOLDER_ID)
 
 
 # Streamlit UI
