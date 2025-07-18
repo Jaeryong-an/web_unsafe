@@ -194,7 +194,7 @@ def crawl_with_ocr(url: str, idx: int) -> tuple[str, str, str, str, str]:
         driver = None
         try:
             options = Options()
-            options.add_argument('--headless=chrome') 
+            options.add_argument('--headless') 
             options.add_argument('--disable-gpu')
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-dev-shm-usage')
