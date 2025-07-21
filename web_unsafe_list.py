@@ -457,12 +457,16 @@ def compute_integrated_score(ocr_match_count, gpt_result_text, gpt_image_text):
 # Googleドライブにアップロード
 def upload_to_drive(file_path: str, file_name: str) -> str:
     try:
+        # ✅ 업로드할 파일의 메타데이터 정의 (폴더 지정)
         file_metadata = {
             'name': file_name,
-            'parents': [DRIVE_FOLDER_ID]
+            'parents': [DRIVE_FOLDER_ID]  # 공유드라이브 내 폴더 ID
         }
+
+        # ✅ 실제 파일 준비
         media = MediaFileUpload(file_path, resumable=True)
 
+        # ✅ Google Drive에 파일 업로드 실행
         file = drive_service.files().create(
             body=file_metadata,
             media_body=media,
@@ -472,17 +476,23 @@ def upload_to_drive(file_path: str, file_name: str) -> str:
 
         file_id = file.get('id')
 
-        # ✅ 업로드한 파일을 anyone에 공개
-        drive_service.permissions().create(
-            fileId=file_id,
-            body={"role": "reader", "type": "anyone"},
-            supportsAllDrives=True
-        ).execute()
+        # ✅ 공개 권한 부여 (공유드라이브면 실패할 수도 있음 → 무시)
+        try:
+            drive_service.permissions().create(
+                fileId=file_id,
+                body={"role": "reader", "type": "anyone"},
+                supportsAllDrives=True
+            ).execute()
+        except Exception as e:
+            st.warning(f"⚠️ 公開権限の設定に失敗しましたが、親フォルダの設定により閲覧可能な場合は問題ありません。\n{e}")
 
+        # ✅ Google Sheets에서 사용할 수 있는 공개 이미지 링크 반환
         return f"https://drive.google.com/uc?id={file_id}"
+
     except Exception as e:
         st.error(f"❌ Drive アップ失敗: {e}")
         return ""
+
 
 # Streamlit UI
 st.title("Web Unsafe 半定")
