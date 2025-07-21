@@ -548,7 +548,7 @@ if st.button("判定実行"):
 
             worksheet.update_cell(row, 2, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))  # B
             worksheet.update_cell(row, 18, maintext[:1200])   # R
-            worksheet.update_cell(row, 28, f'=IMAGE("{drive_url}", 1)')  # S
+            worksheet.update_cell(row, 19, f'=IMAGE("{drive_url}", 1)')  # S
             worksheet.update_cell(row, 20, gpt_opinion)        # T
             worksheet.update_cell(row, 21, gpt_image_opinion)  # U
             worksheet.update_cell(row, 22, keyword_summary)    # V
